@@ -4,18 +4,26 @@
 // Each browser tab pings this every 30s (see script.js) with a random id
 // stored in sessionStorage; hidden tabs stop pinging and age out on their
 // own. Uses Upstash Redis (REST API, free tier) when configured; falls back
-// to an in-memory count for local `vercel dev` testing when no Upstash
-// credentials are set (resets on cold start, not consistent across
-// instances -- fine for local testing, not for production).
+// to an in-memory count for local `vercel dev` testing when no credentials
+// are set (resets on cold start, not consistent across instances -- fine
+// for local testing, not for production).
+//
+// Works with either naming convention for the env vars, since Vercel's own
+// "Upstash for Redis" marketplace integration names them KV_REST_API_URL /
+// KV_REST_API_TOKEN, while a self-created Upstash account uses
+// UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN.
 
 const WINDOW_MS = 75_000;
 const KEY = "presence";
 
+const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+
 let memoryStore = null; // Map<sessionId, timestamp>
 
 async function upstashPipeline(commands) {
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const url = REDIS_URL;
+  const token = REDIS_TOKEN;
   const res = await fetch(`${url}/pipeline`, {
     method: "POST",
     headers: {
@@ -56,9 +64,7 @@ module.exports = async function handler(req, res) {
   }
 
   const now = Date.now();
-  const hasUpstash = Boolean(
-    process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
-  );
+  const hasUpstash = Boolean(REDIS_URL && REDIS_TOKEN);
 
   try {
     const count = hasUpstash ? await countWithUpstash(id, now) : countInMemory(id, now);
