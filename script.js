@@ -122,6 +122,7 @@
   setInterval(rotateQuote, 4500);
 
   let hypeAnimTimer = null;
+  let liftAnimTimer = null;
   els.hypeBtn.addEventListener("click", () => {
     els.hypeAudio.currentTime = 0;
     els.hypeAudio.play().catch(() => {});
@@ -131,6 +132,11 @@
     els.hypeBtn.classList.add("is-hit");
     clearTimeout(hypeAnimTimer);
     hypeAnimTimer = setTimeout(() => els.hypeBtn.classList.remove("is-hit"), 650);
+
+    // background does one full "rep": crossfade to the locked-out pose, hold, then back
+    document.body.classList.add("is-lifting");
+    clearTimeout(liftAnimTimer);
+    liftAnimTimer = setTimeout(() => document.body.classList.remove("is-lifting"), 900);
   });
 
   function currentTrackIndex() {

@@ -34,9 +34,28 @@ body {
   position: fixed;
   inset: 0;
   z-index: -2;
-  background-image: url("assets/bg-1.png");
   background-size: cover;
   background-position: 50% 50%;
+}
+
+.bg__layer--start {
+  background-image: url("assets/bg-start.png");
+}
+
+.bg__layer--lifted {
+  background-image: url("assets/bg-lifted.png");
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+body.is-lifting .bg__layer--lifted {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bg__layer--lifted {
+    transition: none;
+  }
 }
 
 .bg__scrim {
