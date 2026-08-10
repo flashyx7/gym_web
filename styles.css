@@ -36,24 +36,24 @@ body {
   z-index: -2;
   background-size: cover;
   background-position: 50% 50%;
-}
-
-.bg__layer--start {
-  background-image: url("assets/bg-start.png");
-}
-
-.bg__layer--lifted {
-  background-image: url("assets/bg-lifted.png");
   opacity: 0;
   transition: opacity 0.35s ease;
 }
 
-body.is-lifting .bg__layer--lifted {
-  opacity: 1;
-}
+/* Muscle-tier backgrounds -- opacity is driven entirely by JS (see script.js
+   setBackgroundTier/flashLift) based on cumulative rep count. #bgStart0 is
+   the only one visible by default. */
+#bgStart0    { background-image: url("assets/bg-start.png");     opacity: 1; }
+#bgLifted0   { background-image: url("assets/bg-lifted.png"); }
+#bgStart30   { background-image: url("assets/bg-start-30.png"); }
+#bgLifted30  { background-image: url("assets/bg-lifted-30.png"); }
+#bgStart65   { background-image: url("assets/bg-start-65.png"); }
+#bgLifted65  { background-image: url("assets/bg-lifted-65.png"); }
+#bgStart100  { background-image: url("assets/bg-start-100.png"); }
+#bgLifted100 { background-image: url("assets/bg-lifted-100.png"); }
 
 @media (prefers-reduced-motion: reduce) {
-  .bg__layer--lifted {
+  .bg__layer {
     transition: none;
   }
 }
@@ -189,6 +189,23 @@ main {
   color: rgba(255, 255, 255, 0.62);
 }
 
+.reps-reset {
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  margin: -0.35rem -0.2rem -0.35rem 0.1rem;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  transition: background var(--swift), color var(--swift), transform var(--swift);
+}
+
+.reps-reset:hover { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.reps-reset:active { transform: rotate(-90deg); }
+
 .links {
   justify-self: end;
   display: flex;
@@ -298,6 +315,111 @@ main {
 @keyframes hype-shockwave {
   0%   { transform: scale(1);   opacity: 0.9; }
   100% { transform: scale(2.2); opacity: 0; }
+}
+
+/* ---------- Maxed-out state (30+ reps) ---------- */
+
+.hype-btn.is-maxed {
+  background: linear-gradient(135deg, #ffd24d, #ff9d2e);
+  box-shadow: 0 8px 28px rgba(255, 180, 30, 0.55);
+}
+
+.hype-btn.is-maxed:hover {
+  box-shadow: 0 12px 32px rgba(255, 180, 30, 0.65);
+}
+
+.hype-btn.is-maxed .hype-btn__ring {
+  border-color: rgba(255, 210, 77, 0.65);
+}
+
+/* One-time bigger burst the moment 30 reps is crossed -- takes priority over
+   the normal .is-hit shockwave since both target ::before/::after and this
+   rule comes later in the cascade. */
+.hype-btn.is-max-burst::before,
+.hype-btn.is-max-burst::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 3px solid #ffd24d;
+  animation: hype-max-shockwave 1s ease-out forwards;
+  pointer-events: none;
+}
+
+.hype-btn.is-max-burst::after { animation-delay: 0.15s; }
+
+@keyframes hype-max-shockwave {
+  0%   { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+
+.max-toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 14px);
+  transform: translate(-50%, 8px) scale(0.85);
+  white-space: nowrap;
+  background: linear-gradient(135deg, #ffd24d, #ff9d2e);
+  color: #1a0e08;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgba(255, 180, 30, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.max-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+
+.max-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: radial-gradient(circle at 8% 50%, rgba(255, 210, 77, 0.4), transparent 55%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.max-flash.is-active {
+  animation: max-flash-pulse 0.7s ease-out;
+}
+
+@keyframes max-flash-pulse {
+  0%   { opacity: 0; }
+  25%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.confetti-particle {
+  position: fixed;
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  z-index: 41;
+  pointer-events: none;
+  animation: confetti-burst 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes confetti-burst {
+  0%   { transform: translate(-50%, -50%) translate(0, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(-50%, -50%) translate(var(--dx), calc(var(--dy) + 50px)) rotate(var(--spin)); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hype-btn.is-max-burst::before,
+  .hype-btn.is-max-burst::after,
+  .max-flash.is-active,
+  .confetti-particle {
+    animation: none !important;
+    display: none;
+  }
 }
 
 /* ---------- Dock (playlist + player) ---------- */

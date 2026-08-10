@@ -51,14 +51,14 @@
   updateClock();
   setInterval(updateClock, 1000);
 
-  // ---- live presence (real) ----
+  // ---- live presence (real, currently dormant) ----
   // Pings /api/presence every 30s with a per-tab session id; the server
-  // counts distinct ids seen in the last 75s. Stays hidden until a real
-  // count arrives -- never shows a made-up number. Requires deploying to
-  // Vercel with Upstash Redis configured (see .env.example); under a plain
-  // static server (e.g. `npx serve`), /api/presence doesn't exist and the
-  // indicator correctly stays hidden.
-  (function trackPresence() {
+  // counts distinct ids seen in the last 75s. Requires deploying to Vercel
+  // with Upstash Redis configured (see .env.example). Not called right now
+  // -- the topbar slot shows the rep counter instead (see "rep counter /
+  // muscle tiers" below) -- but left intact so it's a one-line call to
+  // bring back (`trackPresence()`), e.g. behind a settings toggle.
+  function trackPresence() {
     const indicator = document.getElementById("presence");
     const countEl = document.getElementById("listeners");
     const BEAT_MS = 30000;
@@ -96,7 +96,118 @@
     document.addEventListener("visibilitychange", () => {
       if (!document.hidden) beat();
     });
-  })();
+  }
+
+  // ---- rep counter / muscle tiers ----
+  // Persisted locally so progress survives a refresh. Each hype-button click
+  // is one "rep"; crossing 10/20/30 total reps levels the background up to
+  // the next muscle tier (matching start/lifted photo pairs), and 30+ is a
+  // permanent "maxed" state with a one-time celebration.
+  const TIERS = [
+    { min: 30, start: document.getElementById("bgStart100"), lifted: document.getElementById("bgLifted100") },
+    { min: 20, start: document.getElementById("bgStart65"), lifted: document.getElementById("bgLifted65") },
+    { min: 10, start: document.getElementById("bgStart30"), lifted: document.getElementById("bgLifted30") },
+    { min: 0, start: document.getElementById("bgStart0"), lifted: document.getElementById("bgLifted0") },
+  ];
+
+  function tierForReps(n) {
+    return TIERS.find((t) => n >= t.min);
+  }
+
+  let reps = 0;
+  try {
+    reps = Number(localStorage.getItem("gym-reps")) || 0;
+  } catch {}
+
+  const repsCountEl = document.getElementById("repsCount");
+  const repsResetEl = document.getElementById("repsReset");
+  const maxToastEl = document.getElementById("maxToast");
+  const maxFlashEl = document.getElementById("maxFlash");
+
+  function saveReps() {
+    try { localStorage.setItem("gym-reps", String(reps)); } catch {}
+  }
+
+  function renderReps() {
+    repsCountEl.textContent = String(reps);
+  }
+
+  function setBackgroundTier(tier) {
+    TIERS.forEach((t) => {
+      const active = t === tier;
+      t.start.style.opacity = active ? "1" : "0";
+      if (!active) t.lifted.style.opacity = "0";
+    });
+  }
+
+  let liftAnimTimer = null;
+  function flashLift(tier, holdMs) {
+    tier.lifted.style.opacity = "1";
+    clearTimeout(liftAnimTimer);
+    liftAnimTimer = setTimeout(() => { tier.lifted.style.opacity = "0"; }, holdMs);
+  }
+
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function spawnConfetti(originEl) {
+    if (prefersReducedMotion) return;
+    const rect = originEl.getBoundingClientRect();
+    const originX = rect.left + rect.width / 2;
+    const originY = rect.top + rect.height / 2;
+    const colors = ["#ffd24d", "#ffb648", "#fff3d0", "#ff9d2e"];
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement("span");
+      p.className = "confetti-particle";
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 60 + Math.random() * 90;
+      p.style.setProperty("--dx", Math.cos(angle) * distance + "px");
+      p.style.setProperty("--dy", Math.sin(angle) * distance + "px");
+      p.style.setProperty("--spin", Math.round(Math.random() * 360) + "deg");
+      p.style.left = originX + "px";
+      p.style.top = originY + "px";
+      p.style.background = colors[i % colors.length];
+      document.body.appendChild(p);
+      p.addEventListener("animationend", () => p.remove());
+    }
+  }
+
+  function showMaxToast() {
+    maxToastEl.classList.add("is-visible");
+    setTimeout(() => maxToastEl.classList.remove("is-visible"), 1800);
+  }
+
+  function flashMaxScreen() {
+    if (prefersReducedMotion) return;
+    maxFlashEl.classList.remove("is-active");
+    void maxFlashEl.offsetWidth;
+    maxFlashEl.classList.add("is-active");
+  }
+
+  let maxBurstTimer = null;
+  function triggerMaxCelebration() {
+    els.hypeBtn.classList.remove("is-max-burst");
+    void els.hypeBtn.offsetWidth;
+    els.hypeBtn.classList.add("is-max-burst");
+    clearTimeout(maxBurstTimer);
+    maxBurstTimer = setTimeout(() => els.hypeBtn.classList.remove("is-max-burst"), 1100);
+
+    spawnConfetti(els.hypeBtn);
+    showMaxToast();
+    flashMaxScreen();
+  }
+
+  renderReps();
+  setBackgroundTier(tierForReps(reps));
+  if (reps >= 30) els.hypeBtn.classList.add("is-maxed");
+
+  repsResetEl.addEventListener("click", (e) => {
+    e.stopPropagation();
+    reps = 0;
+    saveReps();
+    renderReps();
+    setBackgroundTier(tierForReps(reps));
+    els.hypeBtn.classList.remove("is-maxed", "is-max-burst");
+  });
 
   // ---- rotating motivational quotes ----
   const QUOTES = [
@@ -122,7 +233,6 @@
   setInterval(rotateQuote, 4500);
 
   let hypeAnimTimer = null;
-  let liftAnimTimer = null;
   els.hypeBtn.addEventListener("click", () => {
     els.hypeAudio.currentTime = 0;
     els.hypeAudio.play().catch(() => {});
@@ -133,10 +243,19 @@
     clearTimeout(hypeAnimTimer);
     hypeAnimTimer = setTimeout(() => els.hypeBtn.classList.remove("is-hit"), 650);
 
-    // background does one full "rep": crossfade to the locked-out pose, hold, then back
-    document.body.classList.add("is-lifting");
-    clearTimeout(liftAnimTimer);
-    liftAnimTimer = setTimeout(() => document.body.classList.remove("is-lifting"), 900);
+    reps += 1;
+    saveReps();
+    renderReps();
+
+    const justMaxed = reps === 30;
+    const tier = tierForReps(reps);
+    setBackgroundTier(tier);
+    flashLift(tier, justMaxed ? 1500 : 900);
+
+    if (justMaxed) {
+      els.hypeBtn.classList.add("is-maxed");
+      triggerMaxCelebration();
+    }
   });
 
   function currentTrackIndex() {

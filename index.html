@@ -14,17 +14,29 @@
 </head>
 <body>
 
-  <div class="bg__layer bg__layer--start" aria-hidden="true"></div>
-  <div class="bg__layer bg__layer--lifted" id="bgLifted" aria-hidden="true"></div>
+  <div class="bg__layer" id="bgStart0" aria-hidden="true"></div>
+  <div class="bg__layer" id="bgLifted0" aria-hidden="true"></div>
+  <div class="bg__layer" id="bgStart30" aria-hidden="true"></div>
+  <div class="bg__layer" id="bgLifted30" aria-hidden="true"></div>
+  <div class="bg__layer" id="bgStart65" aria-hidden="true"></div>
+  <div class="bg__layer" id="bgLifted65" aria-hidden="true"></div>
+  <div class="bg__layer" id="bgStart100" aria-hidden="true"></div>
+  <div class="bg__layer" id="bgLifted100" aria-hidden="true"></div>
   <div class="bg__scrim" aria-hidden="true"></div>
+  <div class="max-flash" id="maxFlash" aria-hidden="true"></div>
 
   <header class="topbar">
     <div class="topbar__row">
       <span class="topbar__time" id="clock">--:--</span>
-      <div class="presence" id="presence" aria-live="polite" hidden>
+      <div class="presence" id="repsDisplay" aria-live="polite">
         <span class="presence__dot" aria-hidden="true"></span>
-        <span class="presence__count" id="listeners">0</span>
-        <span class="presence__label">on the grind</span>
+        <span class="presence__count" id="repsCount">0</span>
+        <span class="presence__label">reps</span>
+        <button class="reps-reset" id="repsReset" type="button" aria-label="Reset rep count" title="Reset reps">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
+            <path d="M12 5V2L7 6l5 4V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8Z"/>
+          </svg>
+        </button>
       </div>
       <nav class="links" aria-label="Listen elsewhere">
         <a id="ytLink" href="#" target="_blank" rel="noopener" title="Open the playlist on YouTube" aria-label="Open the playlist on YouTube">
@@ -42,6 +54,7 @@
   </header>
 
   <aside class="horns">
+    <div class="max-toast" id="maxToast" aria-live="polite">Maxed Out &#128170;</div>
     <button id="hypeBtn" class="hype-btn" type="button" aria-label="Yeah buddy! Play hype sound">
       <span class="hype-btn__ring" aria-hidden="true"></span>
       <span class="hype-btn__ring hype-btn__ring--2" aria-hidden="true"></span>

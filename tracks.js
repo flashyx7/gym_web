@@ -7,7 +7,7 @@
 // Swap any entry below for your own picks the same way -- videoId is the
 // "v=" part of any YouTube URL.
 
-const DEFAULT_GENRE = "hindi";
+const DEFAULT_GENRE = "phonk";
 
 const PLAYLISTS = {
   hindi: {
