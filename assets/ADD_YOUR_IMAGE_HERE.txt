@@ -1,0 +1,8 @@
+Save the gym photo you shared as:
+
+  assets/bg-1.jpg
+
+(Optional but recommended for smaller file size: also add a WebP version at assets/bg-1.webp --
+the CSS already prefers it and falls back to the .jpg automatically.)
+
+Once the file is in place, delete this note.
